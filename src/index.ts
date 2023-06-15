@@ -101,16 +101,15 @@ async function transferSOL(connection: Web3.Connection, toAddress: Web3.PublicKe
 
 
 async function main() {
-    const connection = new Web3.Connection(`https://solana-devnet.g.alchemy.com/v2/m0mZSrDJ62Zkda72O2YD9fnVSEIRx9_N`);
+    const connection = new Web3.Connection(`${process.env.ENDPOINT}`);
     const signer = await initializeKeypair(connection);
 
-    //await airdropSolIfNeeded(signer, connection);
-    
     console.log("Public key: ", signer.publicKey.toBase58());
+    
+    await airdropSolIfNeeded(signer, connection);
+    await pingProgram(connection, signer);
 
-    // await pingProgram(connection, signer);
-
-   await transferSOL(connection, myAddress, signer, 0.5);
+    await transferSOL(connection, myAddress, signer, 0.5);
  
 }
 
