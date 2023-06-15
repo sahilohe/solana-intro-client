@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const PROGRAM_ID = new Web3.PublicKey("ChT1B39WKLS8qUrkLvFDXMhEJ4F1XZzwUNHUt4AU9aVa")
-const PROGRAM_DATA_PUBLIC_KEY = new Web3.PublicKey("Ah9K7dQ8EHaZqcAsgBW8w37yN2eAy3koFmUn4x3CJtod")
+const PROGRAM_DATA_PUBLIC_KEY = new Web3.PublicKey("Ah9K7dQ8EHaZqcAsgBW8w37yN2eAy3koFmUn4x3CJtod");
+const myAddress = new Web3.PublicKey(`${process.env.ADDRESS}`);
 
 async function initializeKeypair(connection: Web3.Connection): Promise<Web3.Keypair> {
     if (!process.env.PRIVATE_KEY) {
@@ -79,16 +80,38 @@ async function pingProgram(connection: Web3.Connection, payer: Web3.Keypair) {
     )
 }
 
+async function transferSOL(connection: Web3.Connection, toAddress: Web3.PublicKey, fromAddress: Web3.Keypair, amount: number) {
+  const transaction = new Web3.Transaction();
+  const instruction = Web3.SystemProgram.transfer({
+    toPubkey: toAddress,
+    fromPubkey: fromAddress.publicKey,
+    lamports: Web3.LAMPORTS_PER_SOL * amount
+
+  });
+
+  transaction.add(instruction);
+
+  await Web3.sendAndConfirmTransaction(connection, transaction, [fromAddress]);
+
+  const transactionSignature = await Web3.sendAndConfirmTransaction(connection, transaction, [fromAddress]);
+  console.log(
+    `Transaction https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+    )
+}
+
+
 async function main() {
-    const connection = new Web3.Connection(Web3.clusterApiUrl('devnet'));
+    const connection = new Web3.Connection(`https://solana-devnet.g.alchemy.com/v2/m0mZSrDJ62Zkda72O2YD9fnVSEIRx9_N`);
     const signer = await initializeKeypair(connection);
 
-    await airdropSolIfNeeded(signer, connection);
+    //await airdropSolIfNeeded(signer, connection);
     
     console.log("Public key: ", signer.publicKey.toBase58());
 
-    await pingProgram(connection, signer)
-    
+    // await pingProgram(connection, signer);
+
+   await transferSOL(connection, myAddress, signer, 0.5);
+ 
 }
 
 
@@ -101,5 +124,3 @@ main()
         console.log(error);
         process.exit(1);
     });
-
-export default airdropSolIfNeeded;
